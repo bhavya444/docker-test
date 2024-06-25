@@ -33,13 +33,13 @@ jobs:
 
     - name: Build and tag the Docker image
       run: |
-        docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:${{ github.sha }} .
-        docker tag ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:${{ github.sha }} ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:latest
+        docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app1:${{ github.sha }} .
+        docker tag ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app1:${{ github.sha }} ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app1:latest
 
     - name: Push the Docker image to ACR
       run: |
-        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:${{ github.sha }}
-        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:latest
+        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app1:${{ github.sha }}
+        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app1:latest
 
     - name: Azure Login
       uses: azure/login@v1
@@ -49,5 +49,5 @@ jobs:
     - name: Deploy to Azure Web App for Containers
       uses: azure/webapps-deploy@v2
       with:
-        app-name: 'my-react-app'  # Replace with your Azure Web App name
-        images: '${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:latest'
+        app-name: 'my-react-app1'  # Replace with your Azure Web App name
+        images: '${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app1:latest'
