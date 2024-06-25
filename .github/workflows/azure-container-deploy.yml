@@ -1,0 +1,53 @@
+name: Build and Deploy React App to Azure Container
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on push to the main branch
+  pull_request:
+    branches:
+      - main  # Trigger the workflow on pull requests to the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build the React app
+      run: npm run build
+
+    - name: Log in to Azure Container Registry
+      run: |
+        echo ${{ secrets.REGISTRY_PASSWORD }} | docker login ${{ secrets.REGISTRY_LOGIN_SERVER }} --username ${{ secrets.REGISTRY_USERNAME }} --password-stdin
+
+    - name: Build and tag the Docker image
+      run: |
+        docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:${{ github.sha }} .
+        docker tag ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:${{ github.sha }} ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:latest
+
+    - name: Push the Docker image to ACR
+      run: |
+        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:${{ github.sha }}
+        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:latest
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy to Azure Web App for Containers
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'my-react-app'  # Replace with your Azure Web App name
+        images: '${{ secrets.REGISTRY_LOGIN_SERVER }}/my-react-app:latest'
