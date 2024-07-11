@@ -1,0 +1,56 @@
+name: Build and Deploy React App to Azure Static Web App
+
+on:
+  push:
+    branches:
+      - main # Specify the branch you want to trigger the workflow
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16' # Use the version of Node.js required by your project
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build the React app
+      run: npm run build
+
+    - name: Build Docker image
+      run: docker build -t docker-test .
+
+    - name: Login to Azure Container Registry
+      uses: azure/docker-login@v1
+      with:
+        login-server: reacttestapp.azurecr.io
+        username: reacttestapp
+        password: n/3SQUN02bazf/6qw/7pQB/y+qEUwKN8EaxTfpq0Io+ACRA0x6d+
+
+    - name: Push Docker image to Azure Container Registry
+      run: docker push reacttestapp.azurecr.io/docker-test:latest
+
+    - name: Deploy to Azure Static Web App
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: 655eb56c81c6c4f77e2853aada619118607de31ce1231974e15185d85aff9d785-0b90dd30-b9e3-4b88-ae62-406b072ca67301e192286
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: "upload"
+        app_location: "/"
+        output_location: "build"
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy container to Azure Static Web App
+      run: |
+        az webapp config container set --name react-test-app --resource-group 1-0b0ca04e-playground-sandbox --docker-custom-image-name reacttestapp.azurecr.io/docker-test:latest
